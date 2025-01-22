@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState } from "react";
 import {
   Box,
@@ -27,84 +26,90 @@ const CourseCreationForm = () => {
     courseRating: "",
     courseTag: "",
     courseRequirements: "",
-  });
-
-  const [uploading, setUploading] = useState({
-    photo: false,
-    thumbnail: false,
-    video: false,
+    courseCategory:""
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const { name, files } = e.target;
-    if (files && files[0]) {
-      const file = files[0];
-      setUploading((prev) => ({ ...prev, [name]: true }));
-
-      try {
-        const uploadedUrl = await uploadFileToSupabase(file, name);
-        setFormData((prev) => ({ ...prev, [name]: uploadedUrl }));
-      } catch (err) {
-        console.error(`Failed to upload ${name}:`, err.message);
-      } finally {
-        setUploading((prev) => ({ ...prev, [name]: false }));
-      }
+    if (files.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: files[0],
+      }));
     }
   };
 
   const uploadFileToSupabase = async (file, folder) => {
-    try {
-      const fileName = `${folder}/${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage
-        .from("project_file")
-        .upload(fileName, file);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      const { publicUrl } = supabase.storage
-        .from("project_file")
-        .getPublicUrl(fileName);
-      return publicUrl;
-    } catch (err) {
-      console.error("File upload failed:", err.message);
-      return null;
+    const fileName = `${folder}/${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage
+      .from("project_file")
+      .upload(fileName, file);
+    
+    if (error) {
+      console.error("Upload error:", error.message);
+      throw new Error(error.message);
     }
+
+    const { data:url } = supabase.storage
+      .from("project_file")
+      .getPublicUrl(fileName);
+    
+    console.log(`Uploaded ${fileName} to Supabase. Public URL: ${url.publicUrl}`);
+    return url.publicUrl;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const photoUrl = formData.photo
+        ? await uploadFileToSupabase(formData.photo, "photos")
+        : null;
+      const thumbnailUrl = formData.courseThumbnail
+        ? await uploadFileToSupabase(formData.courseThumbnail, "thumbnails")
+        : null;
+      const videoUrl = formData.courseVideo
+        ? await uploadFileToSupabase(formData.courseVideo, "videos")
+        : null;
+
+      console.log("photoUrl", photoUrl);
+      console.log("thumbnailUrl", thumbnailUrl);
+      console.log("videoUrl", videoUrl);
+
       const { data, error } = await supabase.from("courseUpload").insert([
         {
           InstructorName: formData.instructorName,
           InstructorBio: formData.bio,
           InstructorQualification: formData.qualifications,
-          InstructorImage: formData.photo,
+          InstructorImage: photoUrl,
           courseTitle: formData.courseTitle,
           courseShortDis: formData.courseShortIntro,
           courseDescription: formData.courseDescription,
-          courseThumbnail: formData.courseThumbnail,
-          courseVideo: formData.courseVideo,
+          courseThumbnail: thumbnailUrl,
+          courseVideo: videoUrl,
           courseLanguage: formData.courseLanguage,
           coursePrice: parseFloat(formData.coursePrice),
           courseRating: formData.courseRating,
-          courseTag: formData.courseTag,
+          courseTag: formData.courseTag || "", 
           courseRequirement: formData.courseRequirements,
+          courseCategory: formData.courseCategory || ""
         },
       ]);
-
+    console.log("data", data);
+    
       if (error) {
+        console.error("Database insert error:", error.message);
         throw new Error(error.message);
       }
 
-      // Reset form after successful submission
+      
       setFormData({
         instructorName: "",
         bio: "",
@@ -120,13 +125,15 @@ const CourseCreationForm = () => {
         courseRating: "",
         courseTag: "",
         courseRequirements: "",
+        courseCategory:""
       });
     } catch (err) {
-      console.error("Error submitting form:", err.message);
+      console.error("Submission error:", err.message);
     }
   };
 
-  const isUploading = uploading.photo || uploading.thumbnail || uploading.video;
+  console.log("form data",formData);
+  
 
   return (
     <Box sx={{ p: 3, backgroundColor: "#f9f9f9", borderRadius: "8px" }}>
@@ -138,7 +145,6 @@ const CourseCreationForm = () => {
       </Typography>
       <Paper sx={{ p: 3, borderRadius: "8px", boxShadow: 3 }}>
         <form onSubmit={handleSubmit}>
-          {/* Instructor Details Section */}
           <Typography
             variant="h6"
             sx={{ mb: 2, color: "#5022c3", fontWeight: 600 }}
@@ -154,6 +160,7 @@ const CourseCreationForm = () => {
                 value={formData.instructorName}
                 onChange={handleInputChange}
                 required
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -163,6 +170,7 @@ const CourseCreationForm = () => {
                 name="qualifications"
                 value={formData.qualifications}
                 onChange={handleInputChange}
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -174,6 +182,7 @@ const CourseCreationForm = () => {
                 onChange={handleInputChange}
                 multiline
                 rows={4}
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -189,15 +198,14 @@ const CourseCreationForm = () => {
                 <Button
                   variant="contained"
                   component="span"
-                  disabled={uploading.photo}
+                  sx={{ backgroundColor: "#5022c3", borderRadius: "8px" }}
                 >
-                  {uploading.photo ? "Uploading..." : "Upload Instructor Photo"}
+                  Upload Instructor Photo
                 </Button>
               </label>
             </Grid>
           </Grid>
 
-          {/* Course Details Section */}
           <Typography
             variant="h6"
             sx={{ mt: 4, mb: 2, color: "#5022c3", fontWeight: 600 }}
@@ -213,6 +221,7 @@ const CourseCreationForm = () => {
                 value={formData.courseTitle}
                 onChange={handleInputChange}
                 required
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -223,6 +232,7 @@ const CourseCreationForm = () => {
                 value={formData.courseShortIntro}
                 onChange={handleInputChange}
                 required
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -235,54 +245,9 @@ const CourseCreationForm = () => {
                 required
                 multiline
                 rows={4}
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
               />
             </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Tags (comma-separated)"
-                fullWidth
-                name="courseTag"
-                value={formData.courseTag}
-                onChange={handleInputChange}
-                placeholder="e.g., Programming, Design, Marketing"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Language"
-                fullWidth
-                name="courseLanguage"
-                value={formData.courseLanguage}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Price"
-                fullWidth
-                name="coursePrice"
-                value={formData.coursePrice}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Basic Requirements"
-                fullWidth
-                name="courseRequirements"
-                value={formData.courseRequirements}
-                onChange={handleInputChange}
-                required
-                multiline
-                rows={4}
-              />
-            </Grid>
-          </Grid>
-
-          {/* Upload Section */}
-          <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <input
                 accept="image/*"
@@ -296,9 +261,10 @@ const CourseCreationForm = () => {
                 <Button
                   variant="contained"
                   component="span"
-                  disabled={uploading.thumbnail}
+                  fullWidth
+                  sx={{ backgroundColor: "#5022c3", borderRadius: "8px" }}
                 >
-                  {uploading.thumbnail ? "Uploading..." : "Upload Thumbnail"}
+                  Upload Thumbnail
                 </Button>
               </label>
             </Grid>
@@ -315,22 +281,98 @@ const CourseCreationForm = () => {
                 <Button
                   variant="contained"
                   component="span"
-                  disabled={uploading.video}
+                  fullWidth
+                  sx={{ backgroundColor: "#5022c3", borderRadius: "8px" }}
                 >
-                  {uploading.video ? "Uploading..." : "Upload Video"}
+                  Upload Video
                 </Button>
               </label>
             </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Language"
+                fullWidth
+                name="courseLanguage"
+                value={formData.courseLanguage}
+                onChange={handleInputChange}
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Price"
+                fullWidth
+                name="coursePrice"
+                value={formData.coursePrice}
+                onChange={handleInputChange}
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Tag"
+                fullWidth
+                name="courseTag"
+                value={formData.courseTag}
+                onChange={handleInputChange}
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Category"
+                fullWidth
+                name="courseCategory"
+                value={formData.courseCategory}
+                onChange={handleInputChange}
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Rating"
+                fullWidth
+                name="courseRating"
+                value={formData.courseRating}
+                onChange={handleInputChange}
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Basic Requirements"
+                fullWidth
+                name="courseRequirements"
+                value={formData.courseRequirements}
+                onChange={handleInputChange}
+                required
+                multiline
+                rows={4}
+                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
+              />
+            </Grid>
           </Grid>
 
-          {/* Submit Button */}
           <Box sx={{ mt: 4, textAlign: "center" }}>
             <Button
               variant="contained"
               type="submit"
-              disabled={isUploading}
+              sx={{
+                backgroundColor: "#5022c3",
+                color: "#fff",
+                "&:hover": {
+                  backgroundColor: "#3d18a3",
+                },
+                borderRadius: "8px",
+                padding: "10px 30px",
+              }}
             >
-              {isUploading ? "Please Wait..." : "Submit"}
+              Submit
             </Button>
           </Box>
         </form>

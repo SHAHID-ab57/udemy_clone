@@ -1,0 +1,40 @@
+.video-player {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+  }
+  
+  video {
+    width: 100%;
+    border-radius: 8px;
+  }
+  
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 8px;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+  }
+  
+  button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .progress-bar {
+    flex-grow: 1;
+    margin: 0 10px;
+  }
+  
+  input[type="range"] {
+    width: 100%;
+  }
