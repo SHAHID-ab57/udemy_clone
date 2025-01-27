@@ -53,14 +53,20 @@ function Profile() {
       setError("Failed to update profile.");
     } else {
       setSuccess(true);
+      // Update the localStorage as well
+      if (typeof window !== "undefined") {
+        localStorage.setItem("userName", name);
+      }
     }
   };
 
   // Handle logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
-   localStorage.removeItem("userName");
-   localStorage.removeItem("token");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("userName");
+      localStorage.removeItem("token");
+    }
     router.push("/signin");
   };
 

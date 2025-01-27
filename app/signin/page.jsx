@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -13,7 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import supabase from "../config/configsupa";
 
-function Login() {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -21,17 +21,20 @@ function Login() {
 
   const handleLogin = async () => {
     setError(null);
-    const { data,error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
       setError(error.message);
     } else {
-    // console.log(data);
-   localStorage.setItem("token",data.session.access_token)
-    localStorage.setItem("userName",data.user
-        .user_metadata.name)
-     
-    
+      // Ensure we're on the client-side before using localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", data.session.access_token);
+        localStorage.setItem("userName", data.user.user_metadata.name);
+      }
+
       router.push("/");
     }
   };
@@ -62,6 +65,7 @@ function Login() {
         >
           Login
         </Typography>
+
         <Typography
           variant="body1"
           align="center"
@@ -69,6 +73,7 @@ function Login() {
         >
           Welcome back! Please enter your credentials to continue.
         </Typography>
+
         <Stack spacing={3}>
           <TextField
             label="Email"
@@ -76,7 +81,12 @@ function Login() {
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 1,
+            }}
           />
+
           <TextField
             label="Password"
             type="password"
@@ -84,12 +94,18 @@ function Login() {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 1,
+            }}
           />
+
           {error && (
-            <Typography color="error" align="center">
+            <Typography color="error" align="center" sx={{ mt: 2 }}>
               {error}
             </Typography>
           )}
+
           <Button
             variant="contained"
             color="primary"
@@ -101,10 +117,12 @@ function Login() {
               "&:hover": {
                 backgroundColor: "#2c137d",
               },
+              mt: 2,
             }}
           >
             Login
           </Button>
+
           <Typography
             variant="body2"
             align="center"
@@ -113,7 +131,11 @@ function Login() {
             Don't have an account?{" "}
             <Button
               onClick={() => router.push("/auth")}
-              sx={{ textTransform: "none", color: "#3d18a3" , fontWeight: "bold" }}
+              sx={{
+                textTransform: "none",
+                color: "#3d18a3",
+                fontWeight: "bold",
+              }}
             >
               Sign Up
             </Button>
@@ -122,6 +144,6 @@ function Login() {
       </Paper>
     </Container>
   );
-}
+};
 
 export default Login;

@@ -28,9 +28,21 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+  const [isUser, setIsUser] = useState(false); // Add a state for checking user login status
+  const [userName, setUserName] = useState(""); // Store user name
 
-  const isUser = !!localStorage.getItem("token");
-  const userName = localStorage.getItem("userName");
+  useEffect(() => {
+    // Check if we are on the client-side (window is defined)
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      const storedUserName = localStorage.getItem("userName");
+
+      if (token) {
+        setIsUser(true);
+        setUserName(storedUserName);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     // Fetch the notifications from Supabase
@@ -71,8 +83,12 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-   localStorage.removeItem("userName");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userName");
+    }
+    setIsUser(false);
+    setUserName("");
     router.push("/");
     setAnchorEl(null);
   };
@@ -246,7 +262,7 @@ const Header = () => {
 
           {/* Account Section */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            {userName && (
+            {isUser && userName && (
               <Typography
                 sx={{
                   fontSize: "14px",
@@ -283,7 +299,7 @@ const Header = () => {
       >
         {isUser
           ? [
-              <MenuItem key="profile" onClick={() => router.push("/profile")}>
+              <MenuItem key="profile" onClick={() => router.push("/profilepage")}>
                 Profile
               </MenuItem>,
               <MenuItem key="logout" onClick={handleLogout}>
@@ -312,24 +328,23 @@ const Header = () => {
 
       {/* Notification Menu */}
       <Menu
-  anchorEl={notificationAnchor}
-  open={Boolean(notificationAnchor)}
-  onClose={handleMenuClose(setNotificationAnchor)}
->
-  {isLoadingNotifications ? (
-    <MenuItem>Loading notifications...</MenuItem>
-  ) : notifications.length > 0 ? (
-    
-    <MenuItem>
-      <Typography variant="body2">
-        <strong>{notifications[notifications.length - 1].name}</strong>
-      </Typography>
-      <Typography variant="body2">{notifications[notifications.length - 1].title}</Typography>
-    </MenuItem>
-  ) : (
-    <MenuItem>No new notifications</MenuItem>
-  )}
-</Menu>
+        anchorEl={notificationAnchor}
+        open={Boolean(notificationAnchor)}
+        onClose={handleMenuClose(setNotificationAnchor)}
+      >
+        {isLoadingNotifications ? (
+          <MenuItem>Loading notifications...</MenuItem>
+        ) : notifications.length > 0 ? (
+          <MenuItem>
+            <Typography variant="body2">
+              <strong>{notifications[notifications.length - 1].name}</strong>
+            </Typography>
+            <Typography variant="body2">{notifications[notifications.length - 1].title}</Typography>
+          </MenuItem>
+        ) : (
+          <MenuItem>No new notifications</MenuItem>
+        )}
+      </Menu>
     </>
   );
 };
