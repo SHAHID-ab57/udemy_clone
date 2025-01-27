@@ -29,8 +29,8 @@ const Header = () => {
   const [notifications, setNotifications] = useState([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
 
-  const isUser = !!window.localStorage.getItem("token");
-  const userName = window.localStorage.getItem("userName");
+  const isUser = !!localStorage.getItem("token");
+  const userName = localStorage.getItem("userName");
 
   useEffect(() => {
     // Fetch the notifications from Supabase
@@ -71,8 +71,8 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    window.localStorage.removeItem("token");
-    window.localStorage.removeItem("userName");
+    localStorage.removeItem("token");
+   localStorage.removeItem("userName");
     router.push("/");
     setAnchorEl(null);
   };

@@ -59,8 +59,8 @@ function Profile() {
   // Handle logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.localStorage.removeItem("userName");
-    window.localStorage.removeItem("token");
+   localStorage.removeItem("userName");
+   localStorage.removeItem("token");
     router.push("/signin");
   };
 

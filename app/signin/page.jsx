@@ -27,8 +27,8 @@ function Login() {
       setError(error.message);
     } else {
     // console.log(data);
-    window.localStorage.setItem("token",data.session.access_token)
-    window.localStorage.setItem("userName",data.user
+   localStorage.setItem("token",data.session.access_token)
+    localStorage.setItem("userName",data.user
         .user_metadata.name)
      
     

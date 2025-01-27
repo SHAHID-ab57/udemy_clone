@@ -95,7 +95,7 @@ const CourseCreationForm = () => {
           courseThumbnail: thumbnailUrl,
           courseVideo: videoUrl,
           courseLanguage: formData.courseLanguage,
-          coursePrice: parseFloat(formData.coursePrice),
+          coursePrice: formData.coursePrice,
           courseRating: formData.courseRating,
           courseTag: formData.courseTag || "", 
           courseRequirement: formData.courseRequirements,

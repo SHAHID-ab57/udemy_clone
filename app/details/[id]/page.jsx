@@ -76,7 +76,7 @@ const CoursePage = ({ params }) => {
         {
           courseId: id,
           comment,
-          rating: parseInt(ratingValue),
+          rating: ratingValue,
         },
       ]);
 
@@ -122,7 +122,7 @@ const CoursePage = ({ params }) => {
             <Box display="flex" alignItems="center" gap={2} mt={2}>
               <Rating
                 name="average-rating-display"
-                value={parseFloat(averageRating) || 0}
+                value={averageRating || 0}
                 readOnly
                 size="large"
               />
@@ -237,7 +237,7 @@ const CoursePage = ({ params }) => {
                         </Typography>
                         <Rating
                           name="course-rating-display"
-                          value={parseFloat(item.rating) || 0}
+                          value={item.rating || 0}
                           readOnly
                           size="small"
                         />
