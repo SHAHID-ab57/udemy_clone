@@ -1,384 +1,143 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
-  TextField,
-  Button,
   Typography,
   Grid,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Button,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { useRouter } from "next/navigation";
 import supabase from "@/app/config/configsupa";
 
-const CourseCreationForm = () => {
-  const [formData, setFormData] = useState({
-    instructorName: "",
-    bio: "",
-    qualifications: "",
-    photo: null,
-    courseTitle: "",
-    courseShortIntro: "",
-    courseDescription: "",
-    courseThumbnail: null,
-    courseVideo: null,
-    courseLanguage: "",
-    coursePrice: "",
-    courseRating: "",
-    courseTag: "",
-    courseRequirements: "",
-    courseCategory:""
-  });
+const Dashboard = () => {
+  const [courses, setCourses] = useState([]);
+  const [analytics, setAnalytics] = useState({});
+  const router = useRouter();
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-    if (files.length > 0) {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: files[0],
-      }));
+  const fetchCourses = async () => {
+    const { data, error } = await supabase.from("courseUpload").select("*");
+    if (error) console.error("Error fetching courses:", error.message);
+    else {
+      setCourses(data || []);
+      calculateAnalytics(data || []);
     }
   };
 
-  const uploadFileToSupabase = async (file, folder) => {
-    const fileName = `${folder}/${Date.now()}_${file.name}`;
-    const { data, error } = await supabase.storage
-      .from("project_file")
-      .upload(fileName, file);
-    
-    if (error) {
-      console.error("Upload error:", error.message);
-      throw new Error(error.message);
-    }
+  const deleteCourse = async (id) => {
+    if (!confirm("Are you sure you want to delete this course?")) return;
 
-    const { data:url } = supabase.storage
-      .from("project_file")
-      .getPublicUrl(fileName);
-    
-    console.log(`Uploaded ${fileName} to Supabase. Public URL: ${url.publicUrl}`);
-    return url.publicUrl;
+    const { error } = await supabase.from("courseUpload").delete().eq("id", id);
+    if (!error) fetchCourses();
+    else console.error("Error deleting course:", error.message);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const photoUrl = formData.photo
-        ? await uploadFileToSupabase(formData.photo, "photos")
-        : null;
-      const thumbnailUrl = formData.courseThumbnail
-        ? await uploadFileToSupabase(formData.courseThumbnail, "thumbnails")
-        : null;
-      const videoUrl = formData.courseVideo
-        ? await uploadFileToSupabase(formData.courseVideo, "videos")
-        : null;
-
-      console.log("photoUrl", photoUrl);
-      console.log("thumbnailUrl", thumbnailUrl);
-      console.log("videoUrl", videoUrl);
-
-      const { data, error } = await supabase.from("courseUpload").insert([
-        {
-          InstructorName: formData.instructorName,
-          InstructorBio: formData.bio,
-          InstructorQualification: formData.qualifications,
-          InstructorImage: photoUrl,
-          courseTitle: formData.courseTitle,
-          courseShortDis: formData.courseShortIntro,
-          courseDescription: formData.courseDescription,
-          courseThumbnail: thumbnailUrl,
-          courseVideo: videoUrl,
-          courseLanguage: formData.courseLanguage,
-          coursePrice: parseFloat(formData.coursePrice),
-          courseRating: formData.courseRating,
-          courseTag: formData.courseTag || "", 
-          courseRequirement: formData.courseRequirements,
-          courseCategory: formData.courseCategory || ""
-        },
-      ]);
-    console.log("data", data);
-    
-      if (error) {
-        console.error("Database insert error:", error.message);
-        throw new Error(error.message);
-      }
-
-      
-      setFormData({
-        instructorName: "",
-        bio: "",
-        qualifications: "",
-        photo: null,
-        courseTitle: "",
-        courseShortIntro: "",
-        courseDescription: "",
-        courseThumbnail: null,
-        courseVideo: null,
-        courseLanguage: "",
-        coursePrice: "",
-        courseRating: "",
-        courseTag: "",
-        courseRequirements: "",
-        courseCategory:""
-      });
-    } catch (err) {
-      console.error("Submission error:", err.message);
-    }
+  const calculateAnalytics = (courses) => {
+    const totalCourses = courses.length;
+    const averageRating =
+      courses.reduce((sum, course) => sum + parseFloat(course.courseRating || 0), 0) /
+      totalCourses;
+    setAnalytics({ totalCourses, averageRating });
   };
 
-  console.log("form data",formData);
-  
+  const handleAddCourse = () => {
+    router.push("/courseform");
+  };
+
+  const handleEditCourse = (course) => {
+    router.push(`/uploadedit/${course.id}`);
+  };
+
+  const handleViewCourse = (course) => {
+    router.push(`/courseview/${course.id}`);
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
   return (
-    <Box sx={{ p: 3, backgroundColor: "#f9f9f9", borderRadius: "8px" }}>
+    <Box sx={{ p: 3 }}>
       <Typography
-        variant="h4"
-        sx={{ mb: 3, textAlign: "center", color: "#5022c3", fontWeight: 700 }}
+        variant="h3"
+        align="center"
+        sx={{ mb: 3, color: "#5022c3", fontWeight: "bold" }}
       >
-        Course Creation and Management
+        Dashboard
       </Typography>
-      <Paper sx={{ p: 3, borderRadius: "8px", boxShadow: 3 }}>
-        <form onSubmit={handleSubmit}>
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, color: "#5022c3", fontWeight: 600 }}
-          >
-            Instructor Profile
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Instructor Name*"
-                fullWidth
-                name="instructorName"
-                value={formData.instructorName}
-                onChange={handleInputChange}
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Qualifications"
-                fullWidth
-                name="qualifications"
-                value={formData.qualifications}
-                onChange={handleInputChange}
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Bio"
-                fullWidth
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                multiline
-                rows={4}
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <input
-                accept="image/*"
-                style={{ display: "none" }}
-                id="photo-upload"
-                type="file"
-                name="photo"
-                onChange={handleFileChange}
-              />
-              <label htmlFor="photo-upload">
-                <Button
-                  variant="contained"
-                  component="span"
-                  sx={{ backgroundColor: "#5022c3", borderRadius: "8px" }}
-                >
-                  Upload Instructor Photo
-                </Button>
-              </label>
-            </Grid>
-          </Grid>
-
-          <Typography
-            variant="h6"
-            sx={{ mt: 4, mb: 2, color: "#5022c3", fontWeight: 600 }}
-          >
-            Course Details
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                label="Course Title"
-                fullWidth
-                name="courseTitle"
-                value={formData.courseTitle}
-                onChange={handleInputChange}
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Short Intro"
-                fullWidth
-                name="courseShortIntro"
-                value={formData.courseShortIntro}
-                onChange={handleInputChange}
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Course Description"
-                fullWidth
-                name="courseDescription"
-                value={formData.courseDescription}
-                onChange={handleInputChange}
-                required
-                multiline
-                rows={4}
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <input
-                accept="image/*"
-                style={{ display: "none" }}
-                id="thumbnail-upload"
-                type="file"
-                name="courseThumbnail"
-                onChange={handleFileChange}
-              />
-              <label htmlFor="thumbnail-upload">
-                <Button
-                  variant="contained"
-                  component="span"
-                  fullWidth
-                  sx={{ backgroundColor: "#5022c3", borderRadius: "8px" }}
-                >
-                  Upload Thumbnail
-                </Button>
-              </label>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <input
-                accept="video/*"
-                style={{ display: "none" }}
-                id="video-upload"
-                type="file"
-                name="courseVideo"
-                onChange={handleFileChange}
-              />
-              <label htmlFor="video-upload">
-                <Button
-                  variant="contained"
-                  component="span"
-                  fullWidth
-                  sx={{ backgroundColor: "#5022c3", borderRadius: "8px" }}
-                >
-                  Upload Video
-                </Button>
-              </label>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Language"
-                fullWidth
-                name="courseLanguage"
-                value={formData.courseLanguage}
-                onChange={handleInputChange}
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Price"
-                fullWidth
-                name="coursePrice"
-                value={formData.coursePrice}
-                onChange={handleInputChange}
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Tag"
-                fullWidth
-                name="courseTag"
-                value={formData.courseTag}
-                onChange={handleInputChange}
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Category"
-                fullWidth
-                name="courseCategory"
-                value={formData.courseCategory}
-                onChange={handleInputChange}
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Rating"
-                fullWidth
-                name="courseRating"
-                value={formData.courseRating}
-                onChange={handleInputChange}
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Basic Requirements"
-                fullWidth
-                name="courseRequirements"
-                value={formData.courseRequirements}
-                onChange={handleInputChange}
-                required
-                multiline
-                rows={4}
-                sx={{ backgroundColor: "#fff", borderRadius: "8px" }}
-              />
-            </Grid>
-          </Grid>
-
-          <Box sx={{ mt: 4, textAlign: "center" }}>
-            <Button
-              variant="contained"
-              type="submit"
-              sx={{
-                backgroundColor: "#5022c3",
-                color: "#fff",
-                "&:hover": {
-                  backgroundColor: "#3d18a3",
-                },
-                borderRadius: "8px",
-                padding: "10px 30px",
-              }}
-            >
-              Submit
-            </Button>
-          </Box>
-        </form>
-      </Paper>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, textAlign: "center" }}>
+            <Typography variant="h6">Total Courses</Typography>
+            <Typography variant="h4">{analytics.totalCourses || 0}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, textAlign: "center" }}>
+            <Typography variant="h6">Average Rating</Typography>
+            <Typography variant="h4">
+              {analytics.averageRating?.toFixed(1) || "N/A"}
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+      <Box sx={{ mt: 3 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={handleAddCourse}
+          sx={{
+            mb: 2,
+            backgroundColor: "#5022c3",
+            "&:hover": { backgroundColor: "#3d18a3" },
+          }}
+        >
+          Add New Course
+        </Button>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Title</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {courses.map((course) => (
+                <TableRow key={course.id}>
+                  <TableCell>{course.courseTitle}</TableCell>
+                  <TableCell>{course.courseCategory}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleViewCourse(course)}>
+                      <VisibilityIcon sx={{ color: "#5022c3" }} />
+                    </IconButton>
+                    <IconButton onClick={() => handleEditCourse(course)}>
+                      <EditIcon sx={{ color: "#4caf50" }} />
+                    </IconButton>
+                    <IconButton onClick={() => deleteCourse(course.id)}>
+                      <DeleteIcon sx={{ color: "#f44336" }} />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </Box>
   );
 };
 
-export default CourseCreationForm;
+export default Dashboard;

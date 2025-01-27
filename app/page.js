@@ -12,30 +12,32 @@ import {
   Grid,
   Card,
   CardContent,
+  Rating, // Importing Rating
 } from "@mui/material";
 import Banner from "@/Layout/Banner";
 import { useEffect, useState } from "react";
 import supabase from "./config/configsupa";
 import { useRouter } from "next/navigation";
 
-
 export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [category,setCategory] = useState(null);
-const router = useRouter()
+  const [category, setCategory] = useState(null);
+  const [feedback, setFeedback] = useState([]);
+  const [averageRatings, setAverageRatings] = useState({}); // Ratings per course
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width:600px)");
 
+  // Fetch course data
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCourses = async () => {
       try {
-        const { data: courseUpload, error } = await supabase.from("courseUpload").select();
-        if (error) {
-          setError(error.message);
-        } else {
-          setData(courseUpload);
-        }
+        const { data: courseUpload, error } = await supabase
+          .from("courseUpload")
+          .select();
+        if (error) setError(error.message);
+        else setData(courseUpload);
       } catch (err) {
         setError("Unexpected error occurred.");
       } finally {
@@ -43,30 +45,73 @@ const router = useRouter()
       }
     };
 
-    fetchData();
+    fetchCourses();
   }, []);
 
-  console.log("Data", data);
-  // console.log("category", category);
+  // Fetch feedback and calculate ratings
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      const { data: feedbackData, error } = await supabase
+        .from("courseFeedback")
+        .select("*");
 
-  const categoryData = data?.filter((data)=>{
-    return  category ? data?.courseCategory === category : data
-  })
+      if (feedbackData) {
+        setFeedback(feedbackData);
 
+        // Calculate average ratings for each course
+        const ratingsMap = feedbackData.reduce((acc, item) => {
+          if (!acc[item.courseId]) {
+            acc[item.courseId] = { totalRating: 0, count: 0 };
+          }
+          acc[item.courseId].totalRating += parseFloat(item.rating);
+          acc[item.courseId].count += 1;
+          return acc;
+        }, {});
 
+        // Finalize average ratings
+        const averages = Object.keys(ratingsMap).reduce((acc, courseId) => {
+          acc[courseId] = (
+            ratingsMap[courseId].totalRating / ratingsMap[courseId].count
+          ).toFixed(1);
+          return acc;
+        }, {});
+
+        setAverageRatings(averages);
+      }
+
+      if (error) console.error("Error fetching feedback:", error);
+    };
+
+    fetchFeedback();
+  }, []);
+
+  const categoryData = data?.filter((data) => {
+    return category ? data?.courseCategory === category : data.status === "approved";
+  });
+
+  console.log(data);
+  
 
   return (
     <>
-   
       <Banner />
       <Container maxWidth="lg" sx={{ my: 4 }}>
         {/* Title Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant={isMobile ? "h5" : "h4"} sx={{ fontWeight: "bold" }} gutterBottom>
+          <Typography
+            variant={isMobile ? "h5" : "h4"}
+            sx={{ fontWeight: "bold" }}
+            gutterBottom
+          >
             All the skills you need in one place
           </Typography>
-          <Typography variant="body1" sx={{ fontWeight: "bold", color: "#666" }} gutterBottom>
-            From critical skills to technical topics, Udemy supports your professional development.
+          <Typography
+            variant="body1"
+            sx={{ fontWeight: "bold", color: "#666" }}
+            gutterBottom
+          >
+            From critical skills to technical topics, Udemy supports your
+            professional development.
           </Typography>
         </Box>
         <Divider />
@@ -83,7 +128,7 @@ const router = useRouter()
         >
           {data?.map((data, index) => (
             <Button
-            onClick={()=>setCategory(data?.courseCategory)}
+              onClick={() => setCategory(data?.courseCategory)}
               key={index}
               sx={{
                 backgroundColor: "gray",
@@ -98,7 +143,7 @@ const router = useRouter()
                   boxShadow: "none",
                 },
                 minWidth: isMobile ? "100%" : "fit-content",
-                maxWidth: "200px", // Limits the button width
+                maxWidth: "200px", 
                 textAlign: "center",
               }}
             >
@@ -113,7 +158,7 @@ const router = useRouter()
             {categoryData?.map((data, index) => (
               <Grid item xs={12} sm={6} md={4} key={index}>
                 <Button
-                onClick={()=>router.push(`details/${data.id}`)}
+                  onClick={() => router.push(`details/${data.id}`)}
                   sx={{
                     width: "100%",
                     padding: 0,
@@ -150,22 +195,40 @@ const router = useRouter()
                       <Typography variant="h6" gutterBottom>
                         {data?.courseTitle}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary" }}
+                      >
                         {data?.InstructorName}
                       </Typography>
+                      <Box sx={{ mt: 2 }}>
+                        <Rating
+                          name="read-only-rating"
+                          value={parseFloat(averageRatings[data?.id]) || 0}
+                          readOnly
+                          precision={0.1}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          {averageRatings[data?.id]
+                            ? `${averageRatings[data?.id]} / 5`
+                            : "No ratings yet"}
+                        </Typography>
+                      </Box>
                     </CardContent>
                     <Box
                       sx={{
-                        m:2
+                        m: 2,
                       }}
                     >
-                     
-                     <span style={{
-                      backgroundColor:"#3d18a3",
-                      color:"#fff",
-                      padding:"5px",
-                     }}>Premium</span> 
-                     
+                      <span
+                        style={{
+                          backgroundColor: "#3d18a3",
+                          color: "#fff",
+                          padding: "5px",
+                        }}
+                      >
+                        Premium
+                      </span>
                     </Box>
                   </Card>
                 </Button>
@@ -173,9 +236,8 @@ const router = useRouter()
             ))}
           </Grid>
         </Box>
-
-        {/* company logos */}
-        <Box sx={{
+                {/* company logos */}
+                <Box sx={{
           my:5
         }}>
           <Typography align="center" variant="body1" sx={{
