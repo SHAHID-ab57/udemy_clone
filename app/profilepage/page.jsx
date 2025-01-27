@@ -55,7 +55,7 @@ function Profile() {
       setSuccess(true);
       // Update the localStorage as well
       if (typeof window !== "undefined") {
-        localStorage.setItem("userName", name);
+        window.localStorage.setItem("userName", name);
       }
     }
   };
@@ -64,8 +64,8 @@ function Profile() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     if (typeof window !== "undefined") {
-      localStorage.removeItem("userName");
-      localStorage.removeItem("token");
+      window.localStorage.removeItem("userName");
+      window.localStorage.removeItem("token");
     }
     router.push("/signin");
   };

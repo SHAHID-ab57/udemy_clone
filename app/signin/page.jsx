@@ -31,8 +31,8 @@ const Login = () => {
     } else {
       // Ensure we're on the client-side before using localStorage
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", data.session.access_token);
-        localStorage.setItem("userName", data.user.user_metadata.name);
+        window.localStorage.setItem("token", data.session.access_token);
+        window.localStorage.setItem("userName", data.user.user_metadata.name);
       }
 
       router.push("/");

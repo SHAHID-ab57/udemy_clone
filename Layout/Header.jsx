@@ -34,8 +34,8 @@ const Header = () => {
   useEffect(() => {
     // Check if we are on the client-side (window is defined)
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      const storedUserName = localStorage.getItem("userName");
+      const token = window.localStorage.getItem("token");
+      const storedUserName = window.localStorage.getItem("userName");
 
       if (token) {
         setIsUser(true);
@@ -84,8 +84,8 @@ const Header = () => {
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userName");
+      window.localStorage.removeItem("token");
+      window.localStorage.removeItem("userName");
     }
     setIsUser(false);
     setUserName("");
