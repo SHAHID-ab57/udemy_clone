@@ -27,6 +27,9 @@ function Profile() {
   const [error, setError] = useState(null);
   const router = useRouter();
 
+  // Client-side state for localStorage
+  const [isClient, setIsClient] = useState(false);
+
   // Fetch user data on load
   useEffect(() => {
     const fetchUser = async () => {
@@ -43,6 +46,13 @@ function Profile() {
     fetchUser();
   }, []);
 
+  // Set up client-side check after the component mounts
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
+  }, []);
+
   // Handle profile update
   const handleUpdate = async () => {
     setError(null);
@@ -53,9 +63,9 @@ function Profile() {
       setError("Failed to update profile.");
     } else {
       setSuccess(true);
-      // Update the localStorage as well
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("userName", name);
+      // Update the localStorage after the update
+      if (isClient) {
+        localStorage.setItem("userName", name);
       }
     }
   };
@@ -63,9 +73,9 @@ function Profile() {
   // Handle logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem("userName");
-      window.localStorage.removeItem("token");
+    if (isClient) {
+      localStorage.removeItem("userName");
+      localStorage.removeItem("token");
     }
     router.push("/signin");
   };

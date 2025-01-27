@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import {
   AppBar,
@@ -32,7 +33,7 @@ const Header = () => {
   const [userName, setUserName] = useState(""); // Store user name
 
   useEffect(() => {
-    // Check if we are on the client-side (window is defined)
+    // Ensure we're on the client-side before accessing localStorage
     if (typeof window !== "undefined") {
       const token = window.localStorage.getItem("token");
       const storedUserName = window.localStorage.getItem("userName");
@@ -45,24 +46,26 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    // Fetch the notifications from Supabase
+    // Fetch the notifications from Supabase on the client-side
     const fetchNotifications = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("notifications")
-          .select("*")
-          .order("created_at", { ascending: false }) // Order by latest
-          .limit(1); // Limit to 1 for the most recent notification
+      if (typeof window !== "undefined") {
+        try {
+          const { data, error } = await supabase
+            .from("notifications")
+            .select("*")
+            .order("created_at", { ascending: false }) // Order by latest
+            .limit(1); // Limit to 1 for the most recent notification
 
-        if (error) {
+          if (error) {
+            console.error("Error fetching notifications:", error.message);
+          } else {
+            setNotifications(data); // Set the notifications to state
+          }
+        } catch (error) {
           console.error("Error fetching notifications:", error.message);
-        } else {
-          setNotifications(data); // Set the notifications to state
+        } finally {
+          setIsLoadingNotifications(false); // Set loading state to false after fetching
         }
-      } catch (error) {
-        console.error("Error fetching notifications:", error.message);
-      } finally {
-        setIsLoadingNotifications(false); // Set loading state to false after fetching
       }
     };
 
