@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import EditIcon from "@mui/icons-material/Edit";
 import LogoutIcon from "@mui/icons-material/Logout";
 import supabase from "../config/configsupa";
+import Cookies from "js-cookie"; // Import js-cookie
 
 function Profile() {
   const [user, setUser] = useState(null);
@@ -27,7 +28,7 @@ function Profile() {
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  // Client-side state for localStorage
+  // Client-side state for cookies
   const [isClient, setIsClient] = useState(false);
 
   // Fetch user data on load
@@ -63,9 +64,9 @@ function Profile() {
       setError("Failed to update profile.");
     } else {
       setSuccess(true);
-      // Update the localStorage after the update
+      // Update the cookies after the update
       if (isClient) {
-        localStorage.setItem("userName", name);
+        Cookies.set("userName", name, { expires: 7 }); // Store name in cookies
       }
     }
   };
@@ -74,8 +75,8 @@ function Profile() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     if (isClient) {
-      localStorage.removeItem("userName");
-      localStorage.removeItem("token");
+      Cookies.remove("userName");
+      Cookies.remove("token");
     }
     router.push("/signin");
   };

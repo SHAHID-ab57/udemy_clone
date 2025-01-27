@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import supabase from "../config/configsupa";
+import Cookies from "js-cookie"; // Import js-cookie
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -29,11 +30,9 @@ const Login = () => {
     if (error) {
       setError(error.message);
     } else {
-      // Ensure we're on the client-side before using localStorage
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("token", data.session.access_token);
-        window.localStorage.setItem("userName", data.user.user_metadata.name);
-      }
+      // Use Cookies to store the token and user name
+      Cookies.set("token", data.session.access_token, { expires: 7 }); // Expires in 7 days
+      Cookies.set("userName", data.user.user_metadata.name, { expires: 7 }); // Expires in 7 days
 
       router.push("/");
     }

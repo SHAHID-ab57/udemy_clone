@@ -19,6 +19,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";  // Import js-cookie to handle cookies
 import supabase from "@/app/config/configsupa"; // Your Supabase configuration
 
 const Header = () => {
@@ -32,49 +33,47 @@ const Header = () => {
   const [isUser, setIsUser] = useState(false); // Add a state for checking user login status
   const [userName, setUserName] = useState(""); // Store user name
 
+  // Checking user authentication status from cookies
   useEffect(() => {
-    // Ensure we're on the client-side before accessing localStorage
-    if (typeof window !== "undefined") {
-      const token = window.localStorage.getItem("token");
-      const storedUserName = window.localStorage.getItem("userName");
+    const token = Cookies.get("token");  // Get the token from cookies
+    const storedUserName = Cookies.get("userName");  // Get the username from cookies
 
-      if (token) {
-        setIsUser(true);
-        setUserName(storedUserName);
-      }
+    if (token && storedUserName) {
+      setIsUser(true);
+      setUserName(storedUserName);
     }
   }, []);
 
+  // Fetch notifications
   useEffect(() => {
-    // Fetch the notifications from Supabase on the client-side
     const fetchNotifications = async () => {
-      if (typeof window !== "undefined") {
-        try {
-          const { data, error } = await supabase
-            .from("notifications")
-            .select("*")
-            .order("created_at", { ascending: false }) // Order by latest
-            .limit(1); // Limit to 1 for the most recent notification
+      try {
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("*")
+          .order("created_at", { ascending: false }) // Order by latest
+          .limit(1); // Limit to 1 for the most recent notification
 
-          if (error) {
-            console.error("Error fetching notifications:", error.message);
-          } else {
-            setNotifications(data); // Set the notifications to state
-          }
-        } catch (error) {
+        if (error) {
           console.error("Error fetching notifications:", error.message);
-        } finally {
-          setIsLoadingNotifications(false); // Set loading state to false after fetching
+        } else {
+          setNotifications(data); // Set the notifications to state
         }
+      } catch (error) {
+        console.error("Error fetching notifications:", error.message);
+      } finally {
+        setIsLoadingNotifications(false); // Set loading state to false after fetching
       }
     };
 
     fetchNotifications();
   }, []);
 
+  // Handlers for opening and closing menus
   const handleMenuClick = (event, setAnchor) => setAnchor(event.currentTarget);
   const handleMenuClose = (setAnchor) => () => setAnchor(null);
 
+  // Authentication logic
   const handleUserLogin = () => {
     router.push("/signin");
     setAnchorEl(null);
@@ -86,16 +85,15 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem("token");
-      window.localStorage.removeItem("userName");
-    }
+    Cookies.remove("token");  // Remove the token cookie
+    Cookies.remove("userName");  // Remove the username cookie
     setIsUser(false);
     setUserName("");
     router.push("/");
     setAnchorEl(null);
   };
 
+  // Search handler
   const handleSearch = () => {
     if (searchQuery.trim()) {
       router.push(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
