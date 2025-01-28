@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
@@ -82,6 +82,7 @@ const SearchPage = () => {
   };
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <Box sx={{ display: "flex", p: 2 }}>
       {/* Left Sidebar */}
       <Box sx={{ width: "25%", p: 2 }}>
@@ -201,6 +202,7 @@ const SearchPage = () => {
         </Grid>
       </Box>
     </Box>
+    </Suspense>
   );
 };
 
