@@ -94,6 +94,65 @@ const CoursePage = ({ params }) => {
       alert('Unexpected error occurred.');
     }
   };
+  const addToWishlist = async (course) => {
+    try {
+      const { error } = await supabase.from("wishlist").insert([
+        {
+          courseId: course.id,
+          courseTitle: course.courseTitle,
+          courseShortDis: course.courseShortDis,
+        },
+      ]);
+
+      if (error) {
+        console.error("Error adding to wishlist:", error);
+        alert("Error adding to wishlist. Please try again later.");
+      } else {
+        alert("Course added to wishlist successfully!");
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("Unexpected error occurred.");
+    }
+  };
+
+  const addToCart = async (course) => {
+    try {
+      const { data, error } = await supabase
+        .from("cart")
+        .select("*")
+        .eq("courseId", course.id)
+        .single();
+
+      if (data) {
+        // If course is already in the cart, update quantity
+        await supabase
+          .from("cart")
+          .update({ quantity: data.quantity + 1 })
+          .eq("id", data.id);
+        alert("Course quantity updated in cart!");
+      } else {
+        // Add new course to the cart
+        await supabase.from("cart").insert([
+          {
+            courseId: course.id,
+            courseTitle: course.courseTitle,
+            coursePrice: course.coursePrice,
+            quantity: 1,
+          },
+        ]);
+        alert("Course added to cart successfully!");
+      }
+
+      // if (error) {
+      //   console.error("Error adding to cart:", error);
+      //   alert("Error adding to cart. Please try again later.");
+      // }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("Unexpected error occurred.");
+    }
+  };
 
   if (!course) {
     return <Typography variant="h6">Loading...</Typography>;
@@ -266,6 +325,7 @@ const CoursePage = ({ params }) => {
             </Typography>
             <Box mt={3}>
               <Button
+              onClick={()=>addToCart(course)}
                 variant="contained"
                 fullWidth
                 sx={{ bgcolor: '#5022c3', '&:hover': { bgcolor: '#3e1a9e' } }}
@@ -273,6 +333,7 @@ const CoursePage = ({ params }) => {
                 Buy Now
               </Button>
               <Button
+              onClick={()=>addToWishlist(course)}
                 variant="outlined"
                 fullWidth
                 sx={{ mt: 2, color: '#5022c3', borderColor: '#5022c3', '&:hover': { bgcolor: '#f3f0fd' } }}

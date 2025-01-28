@@ -44,6 +44,24 @@ const Header = () => {
     }
   }, []);
 
+  const [wishlist, setWishlist] = useState([]);
+
+  // Fetch Wishlist Items
+  const fetchWishlist = async () => {
+    const { data, error } = await supabase.from("wishlist").select("*");
+    if (error) {
+      console.error("Error fetching wishlist:", error);
+    } else {
+      setWishlist(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchWishlist();
+  }, []);
+
+  
+
   // Fetch notifications
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -217,7 +235,7 @@ const Header = () => {
 
           {/* Wishlist Button */}
           <IconButton
-            onClick={(e) => handleMenuClick(e, setWishlistAnchor)}
+            onClick={(e) => router.push("/wishlistpage")}
             sx={{
               color: "#000",
               "&:hover": {
@@ -226,7 +244,7 @@ const Header = () => {
               },
             }}
           >
-            <Badge badgeContent={0} color="error">
+            <Badge badgeContent={wishlist.length} color="error">
               <FavoriteBorderIcon />
             </Badge>
           </IconButton>
