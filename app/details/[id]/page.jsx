@@ -15,10 +15,12 @@ import {
   Avatar,
   Rating,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
 
 const CoursePage = ({ params }) => {
   const { id } = React.use(params);
-
+const router = useRouter()
   const [course, setCourse] = useState(null);
   const [ratingValue, setRatingValue] = useState(0);
   const [comment, setComment] = useState('');
@@ -67,7 +69,11 @@ const CoursePage = ({ params }) => {
 
   const handleSubmitFeedback = async () => {
     if (!comment || ratingValue === 0) {
-      alert('Please provide both a comment and a rating!');
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please provide both a comment and a rating!',
+      });
       return;
     }
 
@@ -82,16 +88,28 @@ const CoursePage = ({ params }) => {
 
       if (error) {
         console.error('Error submitting feedback:', error);
-        alert('Error submitting feedback. Please try again later.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error submitting feedback. Please try again later.',
+        });
       } else {
-        alert('Feedback submitted successfully!');
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Feedback submitted successfully!',
+        });
         setComment('');
         setRatingValue(0);
         feedbackFetch();
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      alert('Unexpected error occurred.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Unexpected error occurred.',
+      });
     }
   };
   const addToWishlist = async (course) => {
@@ -106,13 +124,25 @@ const CoursePage = ({ params }) => {
 
       if (error) {
         console.error("Error adding to wishlist:", error);
-        alert("Error adding to wishlist. Please try again later.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error adding to wishlist. Please try again later.',
+        });
       } else {
-        alert("Course added to wishlist successfully!");
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Course added to wishlist successfully!',
+        });
       }
     } catch (err) {
       console.error("Unexpected error:", err);
-      alert("Unexpected error occurred.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Unexpected error occurred.',
+      });
     }
   };
 
@@ -130,7 +160,11 @@ const CoursePage = ({ params }) => {
           .from("cart")
           .update({ quantity: data.quantity + 1 })
           .eq("id", data.id);
-        alert("Course quantity updated in cart!");
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Course quantity updated in cart!',
+          });
       } else {
         // Add new course to the cart
         await supabase.from("cart").insert([
@@ -141,8 +175,14 @@ const CoursePage = ({ params }) => {
             quantity: 1,
           },
         ]);
-        alert("Course added to cart successfully!");
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Course added to cart successfully!',
+        });
+        
       }
+      router.push("/cart")
 
       // if (error) {
       //   console.error("Error adding to cart:", error);
@@ -321,7 +361,7 @@ const CoursePage = ({ params }) => {
         <Grid item xs={12} lg={4}>
           <Card sx={{ p: 3, position: 'sticky', top: 16 }}>
             <Typography variant="h4" fontWeight="bold">
-              ₹{course.coursePrice}
+              ${course.coursePrice}
             </Typography>
             <Box mt={3}>
               <Button

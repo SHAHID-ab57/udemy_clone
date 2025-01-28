@@ -1,5 +1,5 @@
 "use client";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
@@ -82,7 +82,7 @@ const SearchPage = () => {
   };
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    
     <Box sx={{ display: "flex", p: 2 }}>
       {/* Left Sidebar */}
       <Box sx={{ width: "25%", p: 2 }}>
@@ -189,20 +189,12 @@ const SearchPage = () => {
                   </CardContent>
                 </Card>
               </Button>
-              {/* <Button
-                variant="outlined"
-                color="error"
-                sx={{ mt: 2, width: "100%" }}
-                onClick={() => handleDeleteCourse(course.id)}
-              >
-                Delete
-              </Button> */}
+              
             </Grid>
           ))}
         </Grid>
       </Box>
     </Box>
-    </Suspense>
   );
 };
 

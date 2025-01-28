@@ -8,6 +8,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import Paper from "@mui/material/Paper";
+import Swal from 'sweetalert2'; // Import SweetAlert2
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -18,7 +19,17 @@ const AdminLogin = () => {
   const handleLogin = () => {
     if (email === "admin@gmail.com" && password === "1234") {
       setError("");
-      router.push("/admin");
+
+      // Show SweetAlert success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Welcome Admin',
+        text: 'You have successfully logged in!',
+        confirmButtonColor: '#3d18a3', // Optional, to match your button color
+      }).then(() => {
+        // Redirect to admin dashboard after SweetAlert closes
+        router.push("/admin");
+      });
     } else {
       setError("Invalid email or password.");
     }

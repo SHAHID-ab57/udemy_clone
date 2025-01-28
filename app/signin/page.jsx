@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  Box,
   Button,
   TextField,
   Typography,
@@ -13,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import supabase from "../config/configsupa";
 import Cookies from "js-cookie"; // Import js-cookie
+import Swal from "sweetalert2"; // Import SweetAlert2
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -29,63 +29,69 @@ const Login = () => {
 
     if (error) {
       setError(error.message);
+      Swal.fire({
+        icon: "error",
+        title: "Login Failed",
+        text: error.message,
+        confirmButtonColor: "#3d18a3",
+      });
     } else {
-      // Use Cookies to store the token and user name
+      // Store token and user details in cookies
       Cookies.set("token", data.session.access_token, { expires: 7 }); // Expires in 7 days
       Cookies.set("userName", data.user.user_metadata.name, { expires: 7 }); // Expires in 7 days
 
-      router.push("/");
+      Swal.fire({
+        icon: "success",
+        title: "Login Successful",
+        text: "Welcome back!",
+        confirmButtonColor: "#3d18a3",
+      }).then(() => {
+        router.push("/");
+      });
     }
   };
 
   return (
     <Container
-      maxWidth="sm"
+      maxWidth="xs"
       sx={{
+        mt: 8,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        minHeight: "100vh",
+        flexDirection: "column",
       }}
     >
       <Paper
         elevation={3}
         sx={{
-          padding: 4,
-          borderRadius: 4,
+          p: 4,
+          borderRadius: 2,
           width: "100%",
+          textAlign: "center",
         }}
       >
         <Typography
           variant="h4"
-          align="center"
           gutterBottom
           sx={{ fontWeight: "bold", color: "#3d18a3" }}
         >
           Login
         </Typography>
-
-        <Typography
-          variant="body1"
-          align="center"
-          sx={{ mb: 4, color: "text.secondary" }}
-        >
-          Welcome back! Please enter your credentials to continue.
+        <Typography variant="body1" sx={{ color: "#666", mb: 3 }}>
+          Welcome back! Please enter your credentials.
         </Typography>
-
-        <Stack spacing={3}>
+        <Stack spacing={2}>
           <TextField
             label="Email"
             variant="outlined"
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            sx={{
-              backgroundColor: "white",
-              borderRadius: 1,
+            InputProps={{
+              style: { borderRadius: 10 },
             }}
           />
-
           <TextField
             label="Password"
             type="password"
@@ -93,48 +99,35 @@ const Login = () => {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            sx={{
-              backgroundColor: "white",
-              borderRadius: 1,
+            InputProps={{
+              style: { borderRadius: 10 },
             }}
           />
-
           {error && (
-            <Typography color="error" align="center" sx={{ mt: 2 }}>
+            <Typography color="error" variant="body2">
               {error}
             </Typography>
           )}
-
           <Button
             variant="contained"
-            color="primary"
-            size="large"
             fullWidth
-            onClick={handleLogin}
             sx={{
               backgroundColor: "#3d18a3",
-              "&:hover": {
-                backgroundColor: "#2c137d",
-              },
-              mt: 2,
+              color: "#fff",
+              fontWeight: "bold",
+              borderRadius: 10,
+              p: 1.5,
+              "&:hover": { backgroundColor: "#2a0e6e" },
             }}
+            onClick={handleLogin}
           >
             Login
           </Button>
-
-          <Typography
-            variant="body2"
-            align="center"
-            sx={{ mt: 2, color: "text.secondary" }}
-          >
+          <Typography variant="body2" sx={{ color: "#666" }}>
             Don't have an account?{" "}
             <Button
               onClick={() => router.push("/auth")}
-              sx={{
-                textTransform: "none",
-                color: "#3d18a3",
-                fontWeight: "bold",
-              }}
+              sx={{ color: "#3d18a3", fontWeight: "bold" }}
             >
               Sign Up
             </Button>

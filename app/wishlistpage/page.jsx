@@ -46,7 +46,7 @@ const WishlistPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 ,height:"100vh"}}>
       <Typography variant="h4" fontWeight="bold" gutterBottom>
         Your Wishlist
       </Typography>

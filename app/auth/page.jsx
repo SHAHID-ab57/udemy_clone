@@ -11,23 +11,35 @@ import {
   Paper,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
+import Swal from "sweetalert2"; // Import SweetAlert2
 import supabase from "../config/configsupa";
 
-// Register Component
 function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
   const router = useRouter();
 
   const handleRegister = async () => {
-    setError(null);
     const { error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
-      setError(error.message);
+      // Show SweetAlert error popup
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error.message,
+      });
     } else {
-      router.push("/signin");
+      // Show success popup and redirect
+      Swal.fire({
+        icon: "success",
+        title: "Registration Successful!",
+        text: "You have successfully registered. Redirecting to login...",
+        timer: 2000,
+        showConfirmButton: false,
+      }).then(() => {
+        router.push("/signin");
+      });
     }
   };
 
@@ -83,11 +95,6 @@ function Register() {
               style: { borderRadius: 10 },
             }}
           />
-          {error && (
-            <Typography color="error" variant="body2">
-              {error}
-            </Typography>
-          )}
           <Button
             variant="contained"
             fullWidth
@@ -104,7 +111,7 @@ function Register() {
             Register
           </Button>
           <Typography variant="body2" sx={{ color: "#666" }}>
-            Already have an account? {" "}
+            Already have an account?{" "}
             <Button
               onClick={() => router.push("/signin")}
               sx={{ color: "#3d18a3", fontWeight: "bold" }}

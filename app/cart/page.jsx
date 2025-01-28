@@ -14,15 +14,16 @@ import {
 } from "@mui/material";
 import { Delete, Add, Remove } from "@mui/icons-material";
 import Cookies from "js-cookie";
+import Swal from 'sweetalert2'; // Import SweetAlert2
+import { useRouter } from "next/navigation";
 
 const CartPage = () => {
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0);
   const [userId, setUserId] = useState("");
-
-  // Fetch user data from cookies on component mount
+const router = useRouter()
   useEffect(() => {
-    const storedUserId = Cookies.get("userName"); // Storing the userId instead of userName
+    const storedUserId = Cookies.get("userName");
     if (storedUserId) {
       setUserId(storedUserId);
     } else {
@@ -30,20 +31,15 @@ const CartPage = () => {
     }
   }, []);
 
-  // Fetch the cart data whenever the userId is updated
   useEffect(() => {
     if (userId) {
       fetchCart();
     }
   }, [userId]);
 
-  // Fetch cart items for the current user
   const fetchCart = async () => {
     try {
-      const { data, error } = await supabase
-        .from("cart")
-        .select("*")
-        
+      const { data, error } = await supabase.from("cart").select("*");
 
       if (error) {
         console.error("Error fetching cart:", error.message);
@@ -59,7 +55,6 @@ const CartPage = () => {
     }
   };
 
-  // Calculate the total price of items in the cart
   const calculateTotal = (cartItems) => {
     const totalPrice = cartItems.reduce(
       (sum, item) => sum + item.coursePrice * item.quantity,
@@ -68,7 +63,6 @@ const CartPage = () => {
     setTotal(totalPrice.toFixed(2));
   };
 
-  // Update the quantity of a cart item
   const updateQuantity = async (id, quantity) => {
     if (quantity < 1) {
       alert("Quantity cannot be less than 1");
@@ -79,13 +73,18 @@ const CartPage = () => {
       const { error } = await supabase
         .from("cart")
         .update({ quantity })
-        .eq("id", id)
-        // .eq("userId", userId); // Ensuring we update the right user's cart
+        .eq("id", id);
 
       if (error) {
         console.error("Error updating quantity:", error.message);
         return;
       }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Quantity Updated',
+        text: 'The quantity has been updated successfully!',
+      });
 
       fetchCart();
     } catch (err) {
@@ -93,27 +92,42 @@ const CartPage = () => {
     }
   };
 
-  // Remove an item from the cart
   const removeFromCart = async (id) => {
     try {
-      const { error } = await supabase
-        .from("cart")
-        .delete()
-        .eq("id", id)
-        // .eq("userId", userId); // Ensuring we remove the right user's item
+      // Confirm deletion using SweetAlert
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this action!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+      });
 
-      if (error) {
-        console.error("Error removing item from cart:", error.message);
-        return;
+      if (result.isConfirmed) {
+        const { error } = await supabase
+          .from("cart")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          console.error("Error removing item from cart:", error.message);
+          return;
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Item Removed',
+          text: 'The item has been removed from your cart.',
+        });
+
+        fetchCart();
       }
-
-      fetchCart();
     } catch (err) {
       console.error("Unexpected error removing item:", err);
     }
   };
 
-  // Handle the checkout process
   const handleCheckout = async () => {
     if (cart.length === 0) {
       alert("Your cart is empty. Please add items to checkout.");
@@ -121,7 +135,6 @@ const CartPage = () => {
     }
 
     try {
-      // Prepare order details
       const orderDetails = cart.map(({ courseId, courseTitle, coursePrice, quantity }) => ({
         courseId,
         courseTitle,
@@ -129,10 +142,9 @@ const CartPage = () => {
         quantity,
       }));
 
-      // Insert the order into the "orders" table
       const { error } = await supabase.from("orders").insert([
         {
-          courseId:orderDetails.courseId,
+          courseId: orderDetails.courseId,
           userId,
           orderDetails,
           totalPrice: parseFloat(total),
@@ -145,22 +157,17 @@ const CartPage = () => {
         return;
       }
 
-      // Clear the cart for the current user
-      // const { error: clearError } = await supabase
-      //   .from("cart")
-      //   .delete()
-      //   .eq("courseId",orderDetails?.courseId ); 
-
-      // if (clearError) {
-      //   console.error("Error clearing cart:", clearError.message);
-      //   alert("Order placed, but there was an issue clearing the cart.");
-      //   return;
-      // }
-
-      // Reset cart state
+      // Reset cart after placing the order
       setCart([]);
       setTotal(0);
-      alert("Order placed successfully, and your cart has been cleared!");
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Order Placed!',
+        text: 'Your order has been successfully placed.',
+
+      });
+      router.push("/")
     } catch (err) {
       console.error("Unexpected error during checkout:", err);
       alert("Unexpected error occurred during checkout. Please try again.");
