@@ -67,6 +67,20 @@ const SearchPage = () => {
     router.push(`/search?${params.toString()}`);
   };
 
+  const handleDeleteCourse = async (courseId) => {
+    const { error } = await supabase
+      .from("courseUpload")
+      .delete()
+      .eq("id", courseId);
+
+    if (error) {
+      console.error("Error deleting course:", error);
+    } else {
+      // After deletion, filter out the deleted course from the state
+      setCourses(courses.filter((course) => course.id !== courseId));
+    }
+  };
+
   return (
     <Box sx={{ display: "flex", p: 2 }}>
       {/* Left Sidebar */}
@@ -174,6 +188,14 @@ const SearchPage = () => {
                   </CardContent>
                 </Card>
               </Button>
+              {/* <Button
+                variant="outlined"
+                color="error"
+                sx={{ mt: 2, width: "100%" }}
+                onClick={() => handleDeleteCourse(course.id)}
+              >
+                Delete
+              </Button> */}
             </Grid>
           ))}
         </Grid>
