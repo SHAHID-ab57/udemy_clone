@@ -38,7 +38,7 @@ const SearchPage = () => {
       if (error) {
         console.error("Error fetching courses:", error);
       } else {
-        // Filter based on search query and filters
+        // Apply filters dynamically
         const filteredCourses = courseUpload.filter((course) => {
           const matchesQuery = course.courseTitle
             .toLowerCase()
@@ -51,6 +51,7 @@ const SearchPage = () => {
 
           return matchesQuery && matchesCategory && matchesRating && matchesPrice && matchesLanguage;
         });
+
         setCourses(filteredCourses);
       }
     };
@@ -62,7 +63,7 @@ const SearchPage = () => {
     const updatedFilters = { ...filters, [field]: value };
     setFilters(updatedFilters);
 
-    // Update the URL with the new filter value
+    // Update the URL with the new filter values
     const params = new URLSearchParams(updatedFilters);
     router.push(`/search?${params.toString()}`);
   };
@@ -76,19 +77,16 @@ const SearchPage = () => {
     if (error) {
       console.error("Error deleting course:", error);
     } else {
-      // After deletion, filter out the deleted course from the state
       setCourses(courses.filter((course) => course.id !== courseId));
     }
   };
 
   return (
-    
     <Box sx={{ display: "flex", p: 2 }}>
       {/* Left Sidebar */}
       <Box sx={{ width: "25%", p: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Filters
-        </Typography>
+        <Typography variant="h6" gutterBottom>Filters</Typography>
+        
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel>Category</InputLabel>
           <Select
@@ -101,6 +99,7 @@ const SearchPage = () => {
             <MenuItem value="Data Science">Data Science</MenuItem>
           </Select>
         </FormControl>
+
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel>Rating</InputLabel>
           <Select
@@ -112,6 +111,7 @@ const SearchPage = () => {
             <MenuItem value="3">3 & above</MenuItem>
           </Select>
         </FormControl>
+
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel>Price</InputLabel>
           <Select
@@ -123,6 +123,7 @@ const SearchPage = () => {
             <MenuItem value="100">Under $100</MenuItem>
           </Select>
         </FormControl>
+
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel>Language</InputLabel>
           <Select
@@ -141,6 +142,7 @@ const SearchPage = () => {
         <Typography variant="h6" gutterBottom>
           Search Results for "{query}"
         </Typography>
+
         <Grid container spacing={3}>
           {courses.map((course) => (
             <Grid item xs={12} sm={6} md={4} key={course.id}>
@@ -189,7 +191,6 @@ const SearchPage = () => {
                   </CardContent>
                 </Card>
               </Button>
-              
             </Grid>
           ))}
         </Grid>
