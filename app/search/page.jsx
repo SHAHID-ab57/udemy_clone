@@ -15,6 +15,7 @@ import {
   InputLabel,
 } from "@mui/material";
 import supabase from "@/app/config/configsupa";
+import dynamic from "next/dynamic"; // 🚀 Import dynamic
 
 const SearchPage = () => {
   const router = useRouter();
@@ -38,7 +39,6 @@ const SearchPage = () => {
       if (error) {
         console.error("Error fetching courses:", error);
       } else {
-        // Apply filters dynamically
         const filteredCourses = courseUpload.filter((course) => {
           const matchesQuery = course.courseTitle
             .toLowerCase()
@@ -62,28 +62,12 @@ const SearchPage = () => {
   const handleFilterChange = (field, value) => {
     const updatedFilters = { ...filters, [field]: value };
     setFilters(updatedFilters);
-
-    // Update the URL with the new filter values
     const params = new URLSearchParams(updatedFilters);
     router.push(`/search?${params.toString()}`);
   };
 
-  const handleDeleteCourse = async (courseId) => {
-    const { error } = await supabase
-      .from("courseUpload")
-      .delete()
-      .eq("id", courseId);
-
-    if (error) {
-      console.error("Error deleting course:", error);
-    } else {
-      setCourses(courses.filter((course) => course.id !== courseId));
-    }
-  };
-
   return (
     <Box sx={{ display: "flex", p: 2 }}>
-      {/* Left Sidebar */}
       <Box sx={{ width: "25%", p: 2 }}>
         <Typography variant="h6" gutterBottom>Filters</Typography>
         
@@ -137,7 +121,6 @@ const SearchPage = () => {
         </FormControl>
       </Box>
 
-      {/* Right Content */}
       <Box sx={{ flex: 1, p: 2 }}>
         <Typography variant="h6" gutterBottom>
           Search Results for "{query}"
@@ -199,4 +182,5 @@ const SearchPage = () => {
   );
 };
 
-export default SearchPage;
+// 🚀 Fix: Disable SSR with next/dynamic
+export default dynamic(() => Promise.resolve(SearchPage), { ssr: false });
