@@ -246,7 +246,7 @@ export default function Home() {
           <Stack spacing={3} direction={"row"} justifyContent={"space-between"}
             sx={{
               mx: 3,
-              flexWrap: "wrap", // Allow wrapping on smaller screens
+              flexWrap: "wrap", 
             }}
           >
             {[

@@ -333,6 +333,13 @@ const Header = () => {
         onClose={() => setDrawerOpen(false)}
       >
         <List>
+          {
+            userName && (
+              <Typography variant="body1" align="center">
+            Welcome! {userName}
+          </Typography>
+            )
+          }
           <ListItem disablePadding>
             <ListItemButton onClick={() => router.push("/")}>Home</ListItemButton>
           </ListItem>
@@ -352,6 +359,30 @@ const Header = () => {
               Cart
             </ListItemButton>
           </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigation("/certificate")}>
+              Certificate
+            </ListItemButton>
+          </ListItem>
+          {
+            !userName && (
+              <ListItem disablePadding>
+            <ListItemButton onClick={handleUserLogin}>
+              Login
+            </ListItemButton>
+          </ListItem>
+            )
+          }
+
+          {
+            userName && (
+              <ListItem disablePadding>
+              <ListItemButton onClick={handleLogout}>
+                Logout
+              </ListItemButton>
+            </ListItem>
+            )
+          }
         </List>
       </Drawer>
 
@@ -367,6 +398,9 @@ const Header = () => {
               </MenuItem>,
               <MenuItem key="logout" onClick={handleLogout}>
                 Logout
+              </MenuItem>,
+              <MenuItem key="certificate" onClick={()=>router.push("/certificate")}>
+                Certificate
               </MenuItem>,
             ]
           : [
