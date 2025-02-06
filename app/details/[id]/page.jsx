@@ -224,6 +224,7 @@ const router = useRouter()
           });
       } else {
         // Add new course to the cart
+        if(userName){
         await supabase.from("cart").insert([
           {
             courseId: course.id,
@@ -232,6 +233,7 @@ const router = useRouter()
             quantity: 1,
           },
         ]);
+        }
         Swal.fire({
           icon: 'success',
           title: 'Success',
