@@ -8,30 +8,55 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import Paper from "@mui/material/Paper";
-import Swal from 'sweetalert2'; // Import SweetAlert2
+import Swal from "sweetalert2"; // Import SweetAlert2
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({ email: "", password: "" });
   const router = useRouter();
 
+  const validateFields = () => {
+    let valid = true;
+    let newErrors = { email: "", password: "" };
+
+    if (!email) {
+      newErrors.email = "Email is required.";
+      valid = false;
+    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+      newErrors.email = "Enter a valid email address.";
+      valid = false;
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required.";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
   const handleLogin = () => {
+    if (!validateFields()) {
+      return;
+    }
+
     if (email === "admin@gmail.com" && password === "1234") {
-      setError("");
+      setErrors({ email: "", password: "" });
 
       // Show SweetAlert success message
       Swal.fire({
-        icon: 'success',
-        title: 'Welcome Admin',
-        text: 'You have successfully logged in!',
-        confirmButtonColor: '#3d18a3', // Optional, to match your button color
+        icon: "success",
+        title: "Welcome Admin",
+        text: "You have successfully logged in!",
+        confirmButtonColor: "#3d18a3",
       }).then(() => {
         // Redirect to admin dashboard after SweetAlert closes
         router.push("/admin");
       });
     } else {
-      setError("Invalid email or password.");
+      setErrors({ ...errors, password: "Invalid email or password." });
     }
   };
 
@@ -64,12 +89,6 @@ const AdminLogin = () => {
           Admin Login
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
         <TextField
           label="Email"
           type="email"
@@ -79,6 +98,8 @@ const AdminLogin = () => {
           variant="outlined"
           margin="normal"
           required
+          error={!!errors.email}
+          helperText={errors.email}
         />
 
         <TextField
@@ -90,6 +111,8 @@ const AdminLogin = () => {
           variant="outlined"
           margin="normal"
           required
+          error={!!errors.password}
+          helperText={errors.password}
         />
 
         <Button

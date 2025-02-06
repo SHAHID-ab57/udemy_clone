@@ -11,24 +11,56 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import supabase from "../config/configsupa";
-import Cookies from "js-cookie"; // Import js-cookie
-import Swal from "sweetalert2"; // Import SweetAlert2
+import Cookies from "js-cookie";
+import Swal from "sweetalert2";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({ email: "", password: "" });
   const router = useRouter();
 
+  const validateFields = () => {
+    let valid = true;
+    let newErrors = { email: "", password: "" };
+
+    if (!email) {
+      newErrors.email = "Email is required.";
+      valid = false;
+    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+      newErrors.email = "Enter a valid email address.";
+      valid = false;
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required.";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
   const handleLogin = async () => {
-    setError(null);
+    if (!validateFields()) {
+      return;
+    }
+
+    Swal.fire({
+      title: "Logging in...",
+      text: "Please wait while we authenticate you.",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      setError(error.message);
       Swal.fire({
         icon: "error",
         title: "Login Failed",
@@ -36,9 +68,8 @@ const Login = () => {
         confirmButtonColor: "#3d18a3",
       });
     } else {
-      // Store token and user details in cookies
-      Cookies.set("token", data.session.access_token, { expires: 7 }); // Expires in 7 days
-      Cookies.set("userName", data.user.user_metadata.name, { expires: 7 }); // Expires in 7 days
+      Cookies.set("token", data.session.access_token, { expires: 7 });
+      Cookies.set("userName", data.user.user_metadata.name, { expires: 7 });
 
       Swal.fire({
         icon: "success",
@@ -88,6 +119,8 @@ const Login = () => {
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email}
             InputProps={{
               style: { borderRadius: 10 },
             }}
@@ -99,15 +132,12 @@ const Login = () => {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={!!errors.password}
+            helperText={errors.password}
             InputProps={{
               style: { borderRadius: 10 },
             }}
           />
-          {error && (
-            <Typography color="error" variant="body2">
-              {error}
-            </Typography>
-          )}
           <Button
             variant="contained"
             fullWidth

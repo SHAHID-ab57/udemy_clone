@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
+import Cookies from "js-cookie";
 
 const CoursePage = ({ params }) => {
   const { id } = React.use(params);
@@ -26,6 +27,22 @@ const router = useRouter()
   const [comment, setComment] = useState('');
   const [feedback, setFeedback] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
+    const [isUser, setIsUser] = useState(false);
+    const [userName, setUserName] = useState("");
+    const [wishlistButton, setWishlistButton] = useState(false);
+
+   useEffect(() => {
+      const token = Cookies.get("token");
+      const storedUserName = Cookies.get("userName");
+  
+      if (token && storedUserName) {
+        setIsUser(true);
+        setUserName(storedUserName);
+      }
+    }, []);
+
+    console.log("userName", userName);
+    
 
   useEffect(() => {
     (async () => {
@@ -114,6 +131,34 @@ const router = useRouter()
   };
   const addToWishlist = async (course) => {
     try {
+      // Check if the course is already in the wishlist
+      const { data, error: fetchError } = await supabase
+        .from("wishlist")
+        .select("*")
+        .eq("courseId", course.id)
+        .single();
+  
+      if (fetchError && fetchError.code !== "PGRST116") {
+        console.error("Error checking wishlist:", fetchError);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error checking wishlist. Please try again later.",
+        });
+        return;
+      }
+  
+      if (data) {
+        Swal.fire({
+          icon: "info",
+          title: "Already in Wishlist",
+          text: "This course is already in your wishlist!",
+        });
+        setWishlistButton(true); // Disable button if already in wishlist
+        return;
+      }
+  
+      // If not in wishlist, add it
       const { error } = await supabase.from("wishlist").insert([
         {
           courseId: course.id,
@@ -121,30 +166,42 @@ const router = useRouter()
           courseShortDis: course.courseShortDis,
         },
       ]);
-
+  
       if (error) {
         console.error("Error adding to wishlist:", error);
         Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Error adding to wishlist. Please try again later.',
+          icon: "error",
+          title: "Error",
+          text: "Error adding to wishlist. Please try again later.",
         });
       } else {
         Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Course added to wishlist successfully!',
+          icon: "success",
+          title: "Success",
+          text: "Course added to wishlist successfully!",
         });
+        setWishlistButton(true); // Disable button after adding
       }
     } catch (err) {
       console.error("Unexpected error:", err);
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Unexpected error occurred.',
+        icon: "error",
+        title: "Error",
+        text: "Unexpected error occurred.",
       });
     }
   };
+  
+  // Fetch wishlist status and disable button if already in wishlist
+  useEffect(() => {
+    const fetchWishlistStatus = async () => {
+      const { data, error } = await supabase.from("wishlist").select("*").eq("courseId", id);
+      if (data && data.length > 0) {
+        setWishlistButton(true);
+      }
+    };
+    fetchWishlistStatus();
+  }, [course]);
 
   const addToCart = async (course) => {
     try {
@@ -182,7 +239,18 @@ const router = useRouter()
         });
         
       }
-      router.push("/cart")
+
+      if(userName){
+        
+        router.push("/cart")
+      }else{
+        Swal.fire({
+          icon: 'warning',
+          title: 'Warning',
+          text: 'Please login to add course to cart.',
+        });
+        router.push("/signin")
+      }
 
       // if (error) {
       //   console.error("Error adding to cart:", error);
@@ -193,6 +261,8 @@ const router = useRouter()
       alert("Unexpected error occurred.");
     }
   };
+
+ 
 
   if (!course) {
     return <Typography variant="h6">Loading...</Typography>;
@@ -376,6 +446,7 @@ const router = useRouter()
               onClick={()=>addToWishlist(course)}
                 variant="outlined"
                 fullWidth
+                disabled={wishlistButton}
                 sx={{ mt: 2, color: '#5022c3', borderColor: '#5022c3', '&:hover': { bgcolor: '#f3f0fd' } }}
               >
                 Add to Wishlist

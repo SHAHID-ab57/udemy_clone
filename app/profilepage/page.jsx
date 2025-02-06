@@ -10,75 +10,119 @@ import {
   Grid,
   Paper,
   Avatar,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import EditIcon from "@mui/icons-material/Edit";
 import LogoutIcon from "@mui/icons-material/Logout";
 import supabase from "../config/configsupa";
-import Cookies from "js-cookie"; // Import js-cookie
+import Cookies from "js-cookie";
+import Swal from "sweetalert2";
 
 function Profile() {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [originalName, setOriginalName] = useState(""); // Store original name
   const [loading, setLoading] = useState(true);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState(null);
   const router = useRouter();
 
-  // Client-side state for cookies
-  const [isClient, setIsClient] = useState(false);
-
-  // Fetch user data on load
   useEffect(() => {
     const fetchUser = async () => {
       const { data: userData, error } = await supabase.auth.getUser();
       if (error) {
-        setError("Error fetching user data");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to fetch user data.",
+        });
       } else {
         setUser(userData.user);
         setEmail(userData.user?.email || "");
         setName(userData.user?.user_metadata?.name || "");
+        setOriginalName(userData.user?.user_metadata?.name || ""); // Save original name
       }
       setLoading(false);
     };
     fetchUser();
   }, []);
 
-  // Set up client-side check after the component mounts
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
-  }, []);
-
-  // Handle profile update
   const handleUpdate = async () => {
-    setError(null);
+    if (name.trim() === "") {
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Name",
+        text: "Name cannot be empty.",
+      });
+      return;
+    }
+
+    if (name === originalName) {
+      Swal.fire({
+        icon: "info",
+        title: "No Changes Detected",
+        text: "You entered same name.",
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: "Updating Profile...",
+      text: "Please wait while we update your information.",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     const { error } = await supabase.auth.updateUser({
       data: { name },
     });
+
     if (error) {
-      setError("Failed to update profile.");
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: "Could not update profile. Please try again later.",
+      });
     } else {
-      setSuccess(true);
-      // Update the cookies after the update
-      if (isClient) {
-        Cookies.set("userName", name, { expires: 7 }); // Store name in cookies
-      }
+      Swal.fire({
+        icon: "success",
+        title: "Profile Updated",
+        text: "Your profile information has been successfully updated!",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      setOriginalName(name);
+      Cookies.set("userName", name, { expires: 7 });
     }
   };
 
-  // Handle logout
   const handleLogout = async () => {
+    Swal.fire({
+      title: "Logging Out...",
+      text: "Please wait while we sign you out.",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     await supabase.auth.signOut();
-    if (isClient) {
-      Cookies.remove("userName");
-      Cookies.remove("token");
-    }
-    router.push("/signin");
+    Cookies.remove("userName");
+    Cookies.remove("token");
+
+    setTimeout(() => {
+      Swal.fire({
+        icon: "success",
+        title: "Logged Out",
+        text: "You have been signed out.",
+        timer: 2000,
+        showConfirmButton: false,
+      }).then(() => {
+        router.push("/signin");
+      });
+    }, 1000);
   };
 
   if (loading) {
@@ -107,7 +151,6 @@ function Profile() {
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
         }}
       >
-        {/* Header Section */}
         <Box
           sx={{
             backgroundColor: "#3d18a3",
@@ -120,7 +163,7 @@ function Profile() {
         >
           <Avatar
             alt={name || "User"}
-            src="/static/images/avatar/1.jpg" // Replace with a dynamic image URL if available
+            src="/static/images/avatar/1.jpg"
             sx={{
               width: 100,
               height: 100,
@@ -138,14 +181,8 @@ function Profile() {
           <Typography variant="subtitle1">{email}</Typography>
         </Box>
 
-        {/* Profile Details Section */}
-        <Box
-          sx={{
-            p: 4,
-          }}
-        >
+        <Box sx={{ p: 4 }}>
           <Grid container spacing={3}>
-            {/* Editable Fields */}
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Name"
@@ -156,35 +193,20 @@ function Profile() {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Email"
-                variant="outlined"
-                fullWidth
-                value={email}
-                disabled
-              />
+              <TextField label="Email" variant="outlined" fullWidth value={email} disabled />
             </Grid>
           </Grid>
 
-          {/* Action Buttons */}
-          <Grid
-            container
-            spacing={3}
-            justifyContent="space-between"
-            sx={{ mt: 4 }}
-          >
+          <Grid container spacing={3} justifyContent="space-between" sx={{ mt: 4 }}>
             <Grid item xs={12} sm={6}>
               <Button
                 variant="contained"
-                color="primary"
                 startIcon={<EditIcon />}
                 onClick={handleUpdate}
                 fullWidth
                 sx={{
                   backgroundColor: "#3d18a3",
-                  "&:hover": {
-                    backgroundColor: "#2c137d",
-                  },
+                  "&:hover": { backgroundColor: "#2c137d" },
                 }}
               >
                 Update Profile
@@ -193,10 +215,10 @@ function Profile() {
             <Grid item xs={12} sm={6}>
               <Button
                 variant="outlined"
-                color="secondary"
                 startIcon={<LogoutIcon />}
                 onClick={handleLogout}
                 fullWidth
+                color="secondary"
               >
                 Logout
               </Button>
@@ -204,21 +226,6 @@ function Profile() {
           </Grid>
         </Box>
       </Paper>
-
-      {/* Success Snackbar */}
-      <Snackbar
-        open={success}
-        autoHideDuration={3000}
-        onClose={() => setSuccess(false)}
-      >
-        <Alert
-          onClose={() => setSuccess(false)}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
-          Profile updated successfully!
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }

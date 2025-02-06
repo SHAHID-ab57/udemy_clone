@@ -40,7 +40,7 @@ const Header = () => {
   const [isUser, setIsUser] = useState(false);
   const [userName, setUserName] = useState("");
   const [wishlist, setWishlist] = useState([]);
-
+ 
   useEffect(() => {
     const token = Cookies.get("token");
     const storedUserName = Cookies.get("userName");
@@ -124,6 +124,9 @@ const Header = () => {
       router.push("/signin");
     }
   };
+
+ 
+
 
   return (
     <>

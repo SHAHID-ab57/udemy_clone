@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  Box,
   Button,
   TextField,
   Typography,
@@ -11,26 +10,62 @@ import {
   Paper,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import Swal from "sweetalert2"; // Import SweetAlert2
+import Swal from "sweetalert2";
 import supabase from "../config/configsupa";
 
 function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({ email: "", password: "" });
   const router = useRouter();
 
+  const validateFields = () => {
+    let valid = true;
+    let newErrors = { email: "", password: "" };
+
+    if (!email) {
+      newErrors.email = "Email is required.";
+      valid = false;
+    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+      newErrors.email = "Enter a valid email address.";
+      valid = false;
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required.";
+      valid = false;
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters long.";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
   const handleRegister = async () => {
+    if (!validateFields()) {
+      return;
+    }
+
+    Swal.fire({
+      title: "Registering...",
+      text: "Please wait while we create your account.",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     const { error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
-      // Show SweetAlert error popup
       Swal.fire({
         icon: "error",
         title: "Oops...",
         text: error.message,
       });
     } else {
-      // Show success popup and redirect
       Swal.fire({
         icon: "success",
         title: "Registration Successful!",
@@ -80,6 +115,8 @@ function Register() {
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email}
             InputProps={{
               style: { borderRadius: 10 },
             }}
@@ -91,6 +128,8 @@ function Register() {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={!!errors.password}
+            helperText={errors.password}
             InputProps={{
               style: { borderRadius: 10 },
             }}

@@ -164,7 +164,7 @@ const CourseEditForm = ({ params }) => {
       }
 
       Swal.fire("Success!", "Course updated successfully!", "success");
-      router.push("/courseUpload");
+      router.push("/admin");
     } catch (err) {
       Swal.fire("Error", "Something went wrong!", "error");
       console.error("Submission error:", err.message);

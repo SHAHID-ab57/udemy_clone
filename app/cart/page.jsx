@@ -127,50 +127,79 @@ const router = useRouter()
       console.error("Unexpected error removing item:", err);
     }
   };
-
+ 
   const handleCheckout = async () => {
     if (cart.length === 0) {
-      alert("Your cart is empty. Please add items to checkout.");
+      Swal.fire({
+        icon: "warning",
+        title: "Cart is Empty",
+        text: "Please add items to your cart before checking out.",
+      });
       return;
     }
-
+  
     try {
-      const orderDetails = cart.map(({ courseId, courseTitle, coursePrice, quantity }) => ({
+      const orderDetails = cart.map(({ id, courseId, courseTitle, coursePrice, quantity }) => ({
+        id, // Include cart item ID for deletion
         courseId,
         courseTitle,
         coursePrice,
         quantity,
       }));
-
+  
       const { error } = await supabase.from("orders").insert([
         {
-          courseId: orderDetails.courseId,
           userId,
           orderDetails,
           totalPrice: parseFloat(total),
         },
       ]);
-
+  
       if (error) {
         console.error("Error placing order:", error.message);
-        alert(`Error placing order: ${error.message}`);
+        Swal.fire({
+          icon: "error",
+          title: "Order Failed",
+          text: `Error placing order: ${error.message}`,
+        });
         return;
       }
-
-      // Reset cart after placing the order
+  
+      // Delete purchased items from the cart
+      const cartItemIds = cart.map(item => item.id);
+      const { error: deleteError } = await supabase
+        .from("cart")
+        .delete()
+        .in("id", cartItemIds); // Delete items by their IDs
+  
+      if (deleteError) {
+        console.error("Error clearing cart:", deleteError.message);
+        Swal.fire({
+          icon: "error",
+          title: "Cart Clear Failed",
+          text: `Error clearing cart: ${deleteError.message}`,
+        });
+        return;
+      }
+  
+      // Reset state
       setCart([]);
       setTotal(0);
-
+  
       Swal.fire({
-        icon: 'success',
-        title: 'Order Placed!',
-        text: 'Your order has been successfully placed.',
-
+        icon: "success",
+        title: "Order Placed!",
+        text: "Your order has been successfully placed.",
       });
-      router.push("/")
+  
+      router.push("/");
     } catch (err) {
       console.error("Unexpected error during checkout:", err);
-      alert("Unexpected error occurred during checkout. Please try again.");
+      Swal.fire({
+        icon: "error",
+        title: "Unexpected Error",
+        text: "An error occurred during checkout. Please try again.",
+      });
     }
   };
 

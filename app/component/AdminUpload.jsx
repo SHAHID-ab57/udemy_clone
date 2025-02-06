@@ -68,15 +68,15 @@ const Dashboard = () => {
   };
 
   const handleAddCourse = () => {
-    router.push("/courseform");
+    router.push("/adminform");
   };
 
   const handleEditCourse = (course) => {
-    router.push(`/uploadedit/${course.id}`);
+    router.push(`/adminedit/${course.id}`);
   };
 
   const handleViewCourse = (course) => {
-    router.push(`/courseview/${course.id}`);
+    router.push(`/adminview/${course.id}`);
   };
 
   useEffect(() => {

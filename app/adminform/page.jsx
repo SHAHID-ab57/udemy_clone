@@ -120,7 +120,7 @@ const CourseCreationForm = () => {
         throw new Error(error.message);
       }
       Swal.fire("Success!", "Course created successfully!", "success");
-      router.push('/courseUpload')
+      router.push('/admin')
       
       setFormData({
         instructorName: "",

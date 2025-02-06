@@ -84,8 +84,12 @@ export default function Home() {
   }, []);
 
   const categoryData = data?.filter((data) => {
-    return category ? data?.courseCategory === category : data.status === "approved";
+    return category ? data?.courseCategory === category && data.status === "approved" : data.status === "approved";
   });
+
+  const categories = [...new Set(data?.map(element => element.courseCategory))];
+
+  
 
   return (
     <>
@@ -121,9 +125,9 @@ export default function Home() {
             justifyContent: isMobile ? "center" : "flex-start",
           }}
         >
-          {data?.map((data, index) => (
+          {categories?.map((data, index) => (
             <Button
-              onClick={() => setCategory(data?.courseCategory)}
+              onClick={() => setCategory(data)}
               key={index}
               sx={{
                 backgroundColor: "gray",
@@ -142,7 +146,7 @@ export default function Home() {
                 textAlign: "center",
               }}
             >
-              {data?.courseCategory}
+              {data}
             </Button>
           ))}
         </Box>
